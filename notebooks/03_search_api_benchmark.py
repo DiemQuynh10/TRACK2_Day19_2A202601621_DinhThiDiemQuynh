@@ -77,6 +77,15 @@ import json
 DATA = ROOT / "data"
 golden = [json.loads(l) for l in (DATA / "golden_set.jsonl").open(encoding="utf-8")]
 
+# Warm-up: first hybrid/semantic calls pay a one-time cost (fastembed ONNX
+# session lazy-init, OS page cache for the model file). Rubric measures
+# steady-state, so burn 10 queries per mode before timing (README
+# troubleshooting: "Chạy 10 query warmup trước rồi đo lại").
+for mode in ("keyword", "semantic", "hybrid"):
+    for q in golden[:10]:
+        httpx.get(f"{URL}/search", params={"q": q["query"], "mode": mode})
+print("Warm-up done (10 queries x 3 modes)")
+
 
 def percentile(values: list[float], p: float) -> float:
     n = len(values)

@@ -185,7 +185,12 @@ else:
 import pandas as pd
 entity_df = pd.DataFrame({
     "user_id": ["u_001", "u_002", "u_003"],
-    "event_timestamp": [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+    # query at NOW for all three: user_profile event_timestamp is always
+    # <= NOW (see make_user_profile), so every entity has a valid PIT match.
+    # An earlier query point (e.g. NOW-2h) can be BEFORE a given user's
+    # feature timestamp, and PIT correctly refuses to use that "future"
+    # value -- which silently drops the row instead of erroring.
+    "event_timestamp": [NOW, NOW, NOW],
 })
 
 historical = fs.get_historical_features(
